@@ -163,9 +163,30 @@ async function ingestBookText(bookId: number, text: string, label: string) {
   }
 }
 
+function preflightSources(catalog: TopicSpec[]): void {
+  const missing: string[] = [];
+  for (const topic of catalog) {
+    for (const book of topic.books) {
+      if (!book.source) continue;
+      const full = join(process.cwd(), "content", "sources", book.source);
+      if (!existsSync(full)) {
+        missing.push(`  - ${topic.slug} / ${book.title}: ${book.source}`);
+      }
+    }
+  }
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing source files for ${missing.length} book(s):\n${missing.join("\n")}\n` +
+        `Fetch the texts into content/sources/ or remove the 'source' field to mark them bibliography-only.`,
+    );
+  }
+}
+
 async function main() {
   const catalogPath = join(process.cwd(), "content", "topics.json");
   const catalog = JSON.parse(readFileSync(catalogPath, "utf8")) as TopicSpec[];
+
+  preflightSources(catalog);
 
   // Instantiate DB (runs migrations).
   getDb();
@@ -185,10 +206,9 @@ async function main() {
       }
       const text = loadSourceText(book.source);
       if (!text) {
-        console.log(
-          `  - ${book.title}: WARN source file missing (${book.source}) — bibliography-only`,
+        throw new Error(
+          `Source file disappeared between preflight and ingest: ${book.source}`,
         );
-        continue;
       }
       await ingestBookText(bookId, text, book.title);
     }
