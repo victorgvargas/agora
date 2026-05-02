@@ -41,7 +41,6 @@ export function ChatPanel({ topicId }: { topicId: number }) {
         body: JSON.stringify({
           topicId,
           messages: outgoing
-            .filter((m) => m.content.length > 0 || m.role === "user")
             .slice(0, -1) // strip empty assistant placeholder
             .map(({ role, content }) => ({ role, content })),
         }),
