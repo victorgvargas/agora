@@ -1,4 +1,7 @@
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
+loadEnv({ path: ".env.local" });
+loadEnv();
+
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { getDb } from "../src/lib/db";
@@ -26,8 +29,9 @@ interface TopicSpec {
   books: BookSpec[];
 }
 
-const BATCH_SIZE = 100;
-const MAX_CHARS_PER_BOOK = 500_000; // cap long books to keep first-run costs sane
+const BATCH_SIZE = 5;               // stay under free-tier TPM (10k tokens/min)
+const INTER_BATCH_DELAY_MS = 13_000; // ~5 req/min cap
+const MAX_CHARS_PER_BOOK = 60_000;   // ~15k tokens → ~15 chunks per book
 
 function stripGutenbergBoilerplate(raw: string): string {
   const startRe = /\*\*\*\s*START OF (THIS|THE) PROJECT GUTENBERG[^*]+\*\*\*/i;
@@ -151,7 +155,11 @@ async function ingestBookText(bookId: number, text: string, label: string) {
     });
     tx();
 
-    console.log(`    embedded ${Math.min(i + BATCH_SIZE, pending.length)}/${pending.length}`);
+    const done = Math.min(i + BATCH_SIZE, pending.length);
+    console.log(`    embedded ${done}/${pending.length}`);
+    if (done < pending.length) {
+      await new Promise((r) => setTimeout(r, INTER_BATCH_DELAY_MS));
+    }
   }
 }
 
