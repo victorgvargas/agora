@@ -1,0 +1,137 @@
+[
+  {
+    "slug": "stoicism-and-the-good-life",
+    "title": "Stoicism and the Good Life",
+    "discipline": "philosophy",
+    "question": "Is tranquility achieved by changing the world or by changing ourselves?",
+    "blurb": "The Stoics argued that human flourishing depends on rightly distinguishing what lies within our power from what does not. Today, that claim is sometimes read as resignation, sometimes as freedom. Which is it?",
+    "books": [
+      {
+        "title": "Meditations",
+        "author": "Marcus Aurelius",
+        "year": "c. 170",
+        "source": "gutenberg/2680.txt",
+        "source_url": "https://www.gutenberg.org/ebooks/2680",
+        "license": "public-domain",
+        "relevance": "A Roman emperor's private journal of Stoic self-examination — the clearest window into Stoic practice from the inside.",
+        "blurb": "Private notes that Marcus Aurelius wrote to steady himself while ruling Rome."
+      },
+      {
+        "title": "The Enchiridion",
+        "author": "Epictetus",
+        "year": "c. 125",
+        "source": "gutenberg/45109.txt",
+        "source_url": "https://www.gutenberg.org/ebooks/45109",
+        "license": "public-domain",
+        "relevance": "A compact handbook of Stoic doctrine centered on the dichotomy of control.",
+        "blurb": "Epictetus's terse manual on what is up to us and what is not."
+      }
+    ]
+  },
+  {
+    "slug": "the-social-contract",
+    "title": "The Social Contract and Political Legitimacy",
+    "discipline": "philosophy",
+    "question": "Where does the legitimate authority of a government come from — consent, survival, or something else?",
+    "blurb": "Hobbes and Rousseau both imagined humans before the state and drew opposite conclusions about what we traded for civil life. Reading them together makes the stakes of political obligation concrete.",
+    "books": [
+      {
+        "title": "Leviathan",
+        "author": "Thomas Hobbes",
+        "year": "1651",
+        "source": "gutenberg/3207.txt",
+        "source_url": "https://www.gutenberg.org/ebooks/3207",
+        "license": "public-domain",
+        "relevance": "The classic argument that political authority is legitimated by the escape it offers from the state of nature.",
+        "blurb": "Hobbes's defense of absolute sovereignty as the price of peace."
+      },
+      {
+        "title": "The Social Contract",
+        "author": "Jean-Jacques Rousseau",
+        "year": "1762",
+        "source": "gutenberg/46333.txt",
+        "source_url": "https://www.gutenberg.org/ebooks/46333",
+        "license": "public-domain",
+        "relevance": "Rousseau's counter: legitimacy rests on the general will, not on a monopoly of force.",
+        "blurb": "Rousseau's argument that free people can only be bound by laws they author."
+      }
+    ]
+  },
+  {
+    "slug": "division-of-labor",
+    "title": "The Division of Labor and Modern Society",
+    "discipline": "sociology",
+    "question": "Does the modern division of labor bind us together or hollow us out?",
+    "blurb": "Durkheim saw the division of labor as the new source of social solidarity; earlier critics feared it severed people from meaning. The disagreement still shapes debates about work and alienation.",
+    "books": [
+      {
+        "title": "The Division of Labour in Society",
+        "author": "Émile Durkheim",
+        "year": "1893",
+        "source": "archive/durkheim_division_of_labor.txt",
+        "source_url": "https://archive.org/details/divisionoflabour00durk",
+        "license": "public-domain",
+        "relevance": "Durkheim's argument that organic solidarity emerges from, rather than despite, specialization.",
+        "blurb": "The founding sociological study of how industrial societies hold together."
+      },
+      {
+        "title": "The Wealth of Nations (Book I)",
+        "author": "Adam Smith",
+        "year": "1776",
+        "source": "gutenberg/3300.txt",
+        "source_url": "https://www.gutenberg.org/ebooks/3300",
+        "license": "public-domain",
+        "relevance": "The pin-factory passage and Smith's later worries about what specialization does to a worker's mind.",
+        "blurb": "The book that put the division of labor at the center of economic thought."
+      }
+    ]
+  },
+  {
+    "slug": "why-rome-fell",
+    "title": "Why Rome Fell",
+    "discipline": "history",
+    "question": "Was the fall of Rome a catastrophe, a slow transformation, or mostly a story historians imposed on the evidence?",
+    "blurb": "Few historical questions have been re-litigated as often. Gibbon's verdict of decline and fall set the terms; later historians have argued for continuity, transformation, and systemic collapse.",
+    "books": [
+      {
+        "title": "The History of the Decline and Fall of the Roman Empire, Vol. 1",
+        "author": "Edward Gibbon",
+        "year": "1776",
+        "source": "gutenberg/731.txt",
+        "source_url": "https://www.gutenberg.org/ebooks/731",
+        "license": "public-domain",
+        "relevance": "The narrative that made 'decline and fall' the default frame for Roman history.",
+        "blurb": "Gibbon's sweeping account of the empire's long unraveling."
+      },
+      {
+        "title": "The Germania",
+        "author": "Tacitus",
+        "year": "c. 98",
+        "source": "gutenberg/2995.txt",
+        "source_url": "https://www.gutenberg.org/ebooks/2995",
+        "license": "public-domain",
+        "relevance": "A Roman ethnography of the peoples Gibbon later blamed (and Tacitus half-admired) for the empire's pressure.",
+        "blurb": "Tacitus's portrait of the Germanic peoples on Rome's frontier."
+      }
+    ]
+  },
+  {
+    "slug": "liberty-and-its-limits",
+    "title": "Liberty and Its Limits",
+    "discipline": "philosophy",
+    "question": "Where is the line between individual liberty and the legitimate authority of society?",
+    "blurb": "Mill's harm principle proposes a sharp boundary; it has been contested from every direction ever since. The question matters wherever speech, public health, or morality legislation come into tension.",
+    "books": [
+      {
+        "title": "On Liberty",
+        "author": "John Stuart Mill",
+        "year": "1859",
+        "source": "gutenberg/34901.txt",
+        "source_url": "https://www.gutenberg.org/ebooks/34901",
+        "license": "public-domain",
+        "relevance": "The canonical case for the harm principle and the marketplace of ideas.",
+        "blurb": "Mill's defense of individuality against social and political tyranny."
+      }
+    ]
+  }
+]
