@@ -4,13 +4,13 @@ import { booksForTopic, dailyTopic } from "@/lib/feed";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const topic = dailyTopic();
+  const topic = await dailyTopic();
   if (!topic) {
     return NextResponse.json(
       { error: "No topics in catalog. Run `pnpm ingest`." },
       { status: 503 },
     );
   }
-  const books = booksForTopic(topic.id);
+  const books = await booksForTopic(topic.id);
   return NextResponse.json({ topic, books });
 }

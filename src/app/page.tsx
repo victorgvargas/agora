@@ -5,7 +5,7 @@ import { booksForTopic, dailyTopic } from "@/lib/feed";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const topic = dailyTopic();
+  const topic = await dailyTopic();
 
   if (!topic) {
     return (
@@ -22,7 +22,7 @@ export default async function Home() {
     );
   }
 
-  const books = booksForTopic(topic.id);
+  const books = await booksForTopic(topic.id);
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-12">

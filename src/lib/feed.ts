@@ -1,4 +1,4 @@
-import { getDb } from "./db";
+import { getDb, ensureSchema } from "./db";
 
 export interface TopicRow {
   id: number;
@@ -28,84 +28,85 @@ function hashString(s: string): number {
   return Math.abs(h);
 }
 
-export function listTopics(): TopicRow[] {
+export async function listTopics(): Promise<TopicRow[]> {
+  await ensureSchema();
   const db = getDb();
-  return db
-    .prepare(
-      "SELECT id, slug, title, discipline, blurb, question FROM topics ORDER BY id",
-    )
-    .all() as TopicRow[];
-}
-
-export function getTopicBySlug(slug: string): TopicRow | null {
-  const db = getDb();
-  return (
-    (db
-      .prepare(
-        "SELECT id, slug, title, discipline, blurb, question FROM topics WHERE slug = ?",
-      )
-      .get(slug) as TopicRow | undefined) ?? null
+  const res = await db.execute(
+    "SELECT id, slug, title, discipline, blurb, question FROM topics ORDER BY id",
   );
+  return res.rows as unknown as TopicRow[];
 }
 
-export function getTopicById(id: number): TopicRow | null {
+export async function getTopicBySlug(slug: string): Promise<TopicRow | null> {
+  await ensureSchema();
   const db = getDb();
-  return (
-    (db
-      .prepare(
-        "SELECT id, slug, title, discipline, blurb, question FROM topics WHERE id = ?",
-      )
-      .get(id) as TopicRow | undefined) ?? null
-  );
+  const res = await db.execute({
+    sql: "SELECT id, slug, title, discipline, blurb, question FROM topics WHERE slug = ?",
+    args: [slug],
+  });
+  return (res.rows[0] as unknown as TopicRow) ?? null;
 }
 
-export function booksForTopic(topicId: number): BookRow[] {
+export async function getTopicById(id: number): Promise<TopicRow | null> {
+  await ensureSchema();
   const db = getDb();
-  return db
-    .prepare(
-      `
+  const res = await db.execute({
+    sql: "SELECT id, slug, title, discipline, blurb, question FROM topics WHERE id = ?",
+    args: [id],
+  });
+  return (res.rows[0] as unknown as TopicRow) ?? null;
+}
+
+export async function booksForTopic(topicId: number): Promise<BookRow[]> {
+  await ensureSchema();
+  const db = getDb();
+  const res = await db.execute({
+    sql: `
       SELECT b.id, b.title, b.author, b.year, b.blurb, tb.relevance_note AS relevance
       FROM books b
       JOIN topic_books tb ON tb.book_id = b.id
       WHERE tb.topic_id = ?
       ORDER BY tb.sort_order, b.id
     `,
-    )
-    .all(topicId) as BookRow[];
+    args: [topicId],
+  });
+  return res.rows as unknown as BookRow[];
 }
 
-export function dailyTopic(): TopicRow | null {
+export async function dailyTopic(): Promise<TopicRow | null> {
+  await ensureSchema();
   const db = getDb();
   const today = todayUtc();
 
-  const pinned = db
-    .prepare(
-      `SELECT t.id, t.slug, t.title, t.discipline, t.blurb, t.question
-       FROM daily_feed d JOIN topics t ON t.id = d.topic_id
-       WHERE d.date = ?`,
-    )
-    .get(today) as TopicRow | undefined;
-  if (pinned) return pinned;
+  const pinned = await db.execute({
+    sql: `SELECT t.id, t.slug, t.title, t.discipline, t.blurb, t.question
+          FROM daily_feed d JOIN topics t ON t.id = d.topic_id
+          WHERE d.date = ?`,
+    args: [today],
+  });
+  if (pinned.rows[0]) return pinned.rows[0] as unknown as TopicRow;
 
-  const topics = listTopics();
+  const topics = await listTopics();
   if (topics.length === 0) return null;
 
   const pick = topics[hashString(today) % topics.length];
-  db.prepare("INSERT OR REPLACE INTO daily_feed(date, topic_id) VALUES (?, ?)").run(
-    today,
-    pick.id,
-  );
+  await db.execute({
+    sql: "INSERT OR REPLACE INTO daily_feed(date, topic_id) VALUES (?, ?)",
+    args: [today, pick.id],
+  });
   return pick;
 }
 
-export function nextTopic(excludeId: number | null): TopicRow | null {
+export async function nextTopic(
+  excludeId: number | null,
+): Promise<TopicRow | null> {
+  await ensureSchema();
   const db = getDb();
-  const row = db
-    .prepare(
-      `SELECT id, slug, title, discipline, blurb, question FROM topics
-       WHERE id != COALESCE(?, -1)
-       ORDER BY RANDOM() LIMIT 1`,
-    )
-    .get(excludeId) as TopicRow | undefined;
-  return row ?? null;
+  const res = await db.execute({
+    sql: `SELECT id, slug, title, discipline, blurb, question FROM topics
+          WHERE id != COALESCE(?, -1)
+          ORDER BY RANDOM() LIMIT 1`,
+    args: [excludeId],
+  });
+  return (res.rows[0] as unknown as TopicRow) ?? null;
 }

@@ -12,10 +12,10 @@ export default async function TopicPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const topic = getTopicBySlug(slug);
+  const topic = await getTopicBySlug(slug);
   if (!topic) notFound();
 
-  const books = booksForTopic(topic.id);
+  const books = await booksForTopic(topic.id);
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">

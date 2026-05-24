@@ -1,33 +1,38 @@
-import Database, { type Database as DB } from "better-sqlite3";
-import * as sqliteVec from "sqlite-vec";
+import { createClient, type Client } from "@libsql/client";
 import { mkdirSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { dirname } from "node:path";
 
 export const EMBED_DIM = 768;
 
-const DEFAULT_PATH = join(process.cwd(), "data", "agora.db");
+let _client: Client | null = null;
+let _migrated = false;
 
-let _db: DB | null = null;
+export function getDb(): Client {
+  if (_client) return _client;
 
-export function getDb(path: string = DEFAULT_PATH): DB {
-  if (_db) return _db;
+  const url = process.env.TURSO_DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      "TURSO_DATABASE_URL is not set. For local dev use `file:./data/agora.db`; for Turso use the libsql:// URL.",
+    );
+  }
+  const authToken = process.env.TURSO_AUTH_TOKEN;
 
-  const dir = dirname(path);
-  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  if (url.startsWith("file:")) {
+    const path = url.slice("file:".length);
+    const dir = dirname(path);
+    if (dir && !existsSync(dir)) mkdirSync(dir, { recursive: true });
+  }
 
-  const db = new Database(path);
-  db.pragma("journal_mode = WAL");
-  db.pragma("foreign_keys = ON");
-
-  sqliteVec.load(db);
-  migrate(db);
-
-  _db = db;
-  return db;
+  _client = createClient({ url, authToken });
+  return _client;
 }
 
-function migrate(db: DB) {
-  db.exec(`
+export async function ensureSchema(): Promise<void> {
+  if (_migrated) return;
+  const db = getDb();
+
+  await db.executeMultiple(`
     CREATE TABLE IF NOT EXISTS topics (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
       slug       TEXT NOT NULL UNIQUE,
@@ -86,12 +91,15 @@ function migrate(db: DB) {
       citations_json TEXT,
       created_at     TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS chunk_embeddings (
+      chunk_id  INTEGER PRIMARY KEY REFERENCES chunks(id) ON DELETE CASCADE,
+      embedding F32_BLOB(${EMBED_DIM}) NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS chunk_embeddings_idx
+      ON chunk_embeddings(libsql_vector_idx(embedding));
   `);
 
-  db.exec(`
-    CREATE VIRTUAL TABLE IF NOT EXISTS chunk_embeddings USING vec0(
-      chunk_id INTEGER PRIMARY KEY,
-      embedding FLOAT[${EMBED_DIM}]
-    );
-  `);
+  _migrated = true;
 }

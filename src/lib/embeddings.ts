@@ -1,23 +1,25 @@
-import { getDb, EMBED_DIM } from "./db";
+import { getDb, ensureSchema, EMBED_DIM } from "./db";
 import { embedQuery } from "./gemini";
 
-function floatArrayToBlob(vec: number[]): Buffer {
+function vectorLiteral(vec: number[]): string {
   if (vec.length !== EMBED_DIM) {
     throw new Error(`Expected ${EMBED_DIM}-dim vector, got ${vec.length}`);
   }
-  const buf = Buffer.alloc(vec.length * 4);
-  for (let i = 0; i < vec.length; i++) buf.writeFloatLE(vec[i], i * 4);
-  return buf;
+  return `[${vec.join(",")}]`;
 }
 
-export function insertChunkEmbedding(chunkId: number, vec: number[]): void {
+export async function insertChunkEmbedding(
+  chunkId: number,
+  vec: number[],
+): Promise<void> {
+  await ensureSchema();
   const db = getDb();
-  // vec0 requires BigInt for its PK column, and doesn't support INSERT OR REPLACE.
-  const id = BigInt(chunkId);
-  db.prepare("DELETE FROM chunk_embeddings WHERE chunk_id = ?").run(id);
-  db.prepare(
-    "INSERT INTO chunk_embeddings(chunk_id, embedding) VALUES (?, ?)",
-  ).run(id, floatArrayToBlob(vec));
+  await db.execute({
+    sql: `INSERT INTO chunk_embeddings(chunk_id, embedding)
+          VALUES (?, vector32(?))
+          ON CONFLICT(chunk_id) DO UPDATE SET embedding = excluded.embedding`,
+    args: [chunkId, vectorLiteral(vec)],
+  });
 }
 
 export interface RetrievedChunk {
@@ -35,31 +37,35 @@ export async function searchChunksForTopic(
   query: string,
   k: number = 6,
 ): Promise<RetrievedChunk[]> {
+  await ensureSchema();
   const db = getDb();
   const vec = await embedQuery(query);
 
-  // Ask vec0 for a larger candidate pool, then filter to the topic's books.
+  // Overfetch ANN candidates, then filter by topic. The chunk_embeddings PK
+  // aliases rowid, so vector_top_k's `id` column equals chunks.id.
   const candidatePool = Math.max(k * 8, 40);
-  const rows = db
-    .prepare(
-      `
+  const litVec = vectorLiteral(vec);
+
+  const res = await db.execute({
+    sql: `
       SELECT
-        ce.chunk_id  AS chunkId,
-        ce.distance  AS distance,
-        c.book_id    AS bookId,
-        c.ordinal    AS ordinal,
-        c.text       AS text,
-        b.title      AS bookTitle,
-        b.author     AS bookAuthor
-      FROM chunk_embeddings ce
-      JOIN chunks c ON c.id = ce.chunk_id
+        c.id      AS chunkId,
+        c.book_id AS bookId,
+        c.ordinal AS ordinal,
+        c.text    AS text,
+        b.title   AS bookTitle,
+        b.author  AS bookAuthor,
+        vector_distance_cos(ce.embedding, vector32(?)) AS distance
+      FROM vector_top_k('chunk_embeddings_idx', vector32(?), ?) AS vt
+      JOIN chunk_embeddings ce ON ce.chunk_id = vt.id
+      JOIN chunks c ON c.id = vt.id
       JOIN books  b ON b.id = c.book_id
       JOIN topic_books tb ON tb.book_id = c.book_id AND tb.topic_id = ?
-      WHERE ce.embedding MATCH ? AND k = ?
-      ORDER BY ce.distance
+      ORDER BY distance
+      LIMIT ?
     `,
-    )
-    .all(topicId, floatArrayToBlob(vec), candidatePool) as RetrievedChunk[];
+    args: [litVec, litVec, candidatePool, topicId, k],
+  });
 
-  return rows.slice(0, k);
+  return res.rows as unknown as RetrievedChunk[];
 }

@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   }
   const { topicId, messages } = parsed.data;
 
-  const topic = getTopicById(topicId);
+  const topic = await getTopicById(topicId);
   if (!topic) return Response.json({ error: "Unknown topic" }, { status: 404 });
 
   const lastUser = [...messages].reverse().find((m) => m.role === "user");
